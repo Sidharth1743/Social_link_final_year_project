@@ -1,0 +1,31 @@
+[project]
+name = "linksocial-final-year"
+version = "0.1.0"
+description = "LINKSOCIAL final-year project reproduction and comparison baseline"
+readme = "README.md"
+authors = [
+    { name = "Sidharth1743", email = "sid250581@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.12",
+    "joblib>=1.4.2",
+    "numpy>=2.2.4",
+    "scikit-learn>=1.6.1",
+    "sentence-transformers>=3.4.1",
+    "torch>=2.6.0",
+    "uvicorn>=0.34.0",
+]
+
+[project.scripts]
+linksocial = "linksocial_final_year:main"
+linksocial-web = "linksocial_final_year.webapp:main"
+
+[build-system]
+requires = ["uv_build>=0.9.24,<0.10.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+]

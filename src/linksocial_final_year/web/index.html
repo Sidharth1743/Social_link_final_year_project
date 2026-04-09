@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LINKSOCIAL Research Studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/styles.css" />
+  </head>
+  <body>
+    <div class="background-grid"></div>
+    <main class="shell">
+      <header class="topbar">
+        <div class="topbar-brand">
+          <span class="topbar-mark"></span>
+          <div>
+            <strong>LINKSOCIAL Studio</strong>
+            <span>profile linkage research interface</span>
+          </div>
+        </div>
+        <div class="topbar-note">Live demo + experiment viewer</div>
+      </header>
+
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Overview</p>
+          <h1>Inspect how profiles are linked across platforms.</h1>
+          <p class="hero-text">
+            Search a source profile, compare candidate matches, and review the evidence produced by classical, lexical, and semantic models.
+          </p>
+        </div>
+        <div class="hero-stats" id="hero-stats"></div>
+      </section>
+
+      <section class="studio">
+        <aside class="panel controls">
+          <div class="panel-header">
+            <p class="eyebrow">Demo Mode</p>
+            <h2>Select source profile</h2>
+          </div>
+          <label class="field">
+            <span>Platform</span>
+            <select id="platform-filter">
+              <option value="">All platforms</option>
+              <option value="google_plus">Google+</option>
+              <option value="instagram">Instagram</option>
+              <option value="twitter">Twitter</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Search</span>
+            <input id="profile-query" type="text" placeholder="username, full name, bio" />
+          </label>
+          <button id="search-button" class="action-button">Search Profiles</button>
+          <div class="profile-list" id="profile-list"></div>
+        </aside>
+
+        <section class="panel graph-panel">
+          <div class="panel-header">
+            <p class="eyebrow">Linkage Graph</p>
+            <h2>Orbiting candidate map</h2>
+          </div>
+          <div class="graph-toolbar">
+            <label class="field compact">
+              <span>Target platform</span>
+              <select id="target-platform">
+                <option value="instagram">Instagram</option>
+                <option value="twitter">Twitter</option>
+                <option value="google_plus">Google+</option>
+              </select>
+            </label>
+            <label class="field compact">
+              <span>Model</span>
+              <select id="model-select"></select>
+            </label>
+            <button id="link-button" class="action-button alt">Run Linkage</button>
+          </div>
+          <div class="graph-stage" id="graph-stage">
+            <svg id="graph-svg"></svg>
+          </div>
+        </section>
+
+        <aside class="panel inspector">
+          <div class="panel-header">
+            <p class="eyebrow">Evidence</p>
+            <h2>Inspector</h2>
+          </div>
+          <div id="inspector-content" class="inspector-content">
+            <p class="muted">Select a profile and run linkage to inspect candidates, feature evidence, and model agreement.</p>
+          </div>
+        </aside>
+      </section>
+
+      <section class="results-grid">
+        <article class="panel results-panel">
+          <div class="panel-header">
+            <p class="eyebrow">Research Mode</p>
+            <h2>Pairwise results</h2>
+          </div>
+          <div id="pairwise-table"></div>
+        </article>
+        <article class="panel results-panel">
+          <div class="panel-header">
+            <p class="eyebrow">Research Mode</p>
+            <h2>Multi-platform ranking</h2>
+          </div>
+          <div id="multi-table"></div>
+        </article>
+      </section>
+
+      <section class="panel architecture-panel">
+        <div class="panel-header">
+          <p class="eyebrow">Pipeline</p>
+          <h2>System flow</h2>
+        </div>
+        <div class="architecture-line">
+          <span class="arch-chip">Raw profiles</span>
+          <span class="arch-sep">/</span>
+          <span class="arch-chip">Canonical records</span>
+          <span class="arch-sep">/</span>
+          <span class="arch-chip">Candidate pruning</span>
+          <span class="arch-sep">/</span>
+          <span class="arch-chip">Feature extraction</span>
+          <span class="arch-sep">/</span>
+          <span class="arch-chip">Model ranking</span>
+          <span class="arch-sep">/</span>
+          <span class="arch-chip">Evidence review</span>
+        </div>
+      </section>
+    </main>
+    <script src="/assets/app.js"></script>
+  </body>
+</html>
