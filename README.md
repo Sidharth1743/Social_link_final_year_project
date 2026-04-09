@@ -68,6 +68,7 @@ flowchart LR
 
 ## Repo Layout
 
+- `IMPLEMENTATION.md`: full implementation explanation for submission and viva preparation
 - `src/linksocial_final_year/data.py`: raw dataset parsing and canonical loading
 - `src/linksocial_final_year/features.py`: classical, lexical, and semantic-compatible feature construction
 - `src/linksocial_final_year/evaluation.py`: training, scoring, pairwise, and multi-platform evaluation
