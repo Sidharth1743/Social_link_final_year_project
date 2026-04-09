@@ -1,37 +1,35 @@
 # LINKSOCIAL Final-Year Project
 
-Research-focused implementation of the LINKSOCIAL user identity linkage pipeline on the public LinkSocial dataset, extended with newer semantic baselines and a stronger hybrid ranker.
+Research-focused implementation of LINKSOCIAL for cross-platform user identity linkage on the public LinkSocial dataset, extended with stronger semantic and hybrid baselines plus a lightweight frontend for demo and analysis.
 
-## Project Scope
+## What This Project Includes
 
-This repo is built around one practical question:
+- reproduction-oriented LINKSOCIAL pipeline
+- stronger profile-only comparison models
+- GPU-backed semantic profile embeddings with caching
+- pairwise and three-platform evaluation
+- minimal research frontend for interactive profile linking
 
-> Given only public profile metadata from Google+, Instagram, and Twitter, how far can we push identity linkage beyond the original 2018 LINKSOCIAL feature-engineering pipeline?
+Core question:
 
-To answer that, the project now includes:
+> Using only public profile metadata from Google+, Instagram, and Twitter, how much can we improve on the original 2018 LINKSOCIAL pipeline while staying fair to the available dataset?
 
-- a reproduction-oriented LINKSOCIAL pipeline
-- several stronger comparison models
-- cached semantic profile embeddings running on GPU
-- pairwise and multi-platform evaluation
-- documented research context and architecture
-
-## Architecture
+## Current Architecture
 
 ```mermaid
 flowchart LR
-    A[Dataset-LinkSocial raw JSON] --> B[Canonical profile loader]
+    A[Raw LinkSocial JSON] --> B[Canonical profile loader]
     B --> C[Processed profiles.jsonl]
-    C --> D[Candidate generation\nmerged-bigram Jaccard pruning]
+    C --> D[Candidate pruning via merged bigram Jaccard]
 
-    C --> E[Classical LINKSOCIAL features\nJaro-Winkler, TF-IDF, bigrams,\ncharacter distributions, URL overlap]
-    C --> F[Lexical modern features\nchar n-gram profile similarity,\nbio char similarity, token Jaccard]
-    C --> G[Semantic encoder\nBAAI/bge-small-en-v1.5\ncached GPU embeddings]
+    C --> E[Classical features]
+    C --> F[Lexical modern features]
+    C --> G[Semantic profile embeddings]
 
     D --> H[Candidate pools]
-    E --> I[Classical rankers\nSGD, Logistic Regression, Random Forest]
-    F --> J[Lexical modern ranker\nGradient Boosting]
-    G --> K[Semantic cosine baseline]
+    E --> I[LINKSOCIAL rankers]
+    F --> J[Modern lexical ranker]
+    G --> K[Semantic baseline]
     E --> L[Hybrid semantic ranker]
     F --> L
     G --> L
@@ -46,71 +44,56 @@ flowchart LR
     K --> M
     L --> M
 
-    I --> N[Three-platform evaluation]
+    I --> N[Multi-platform evaluation]
     J --> N
     K --> N
     L --> N
 
-    M --> O[results/latest/metrics.json]
-    N --> P[results/latest/summary.md]
+    C --> O[FastAPI research frontend]
+    M --> P[results/latest/metrics.json]
+    N --> Q[results/latest/summary.md]
 ```
 
 ## Model Suite
 
-| Model | Type | Input family | Purpose |
+| Model | Type | Inputs | Role |
 | --- | --- | --- | --- |
-| `baseline` | unsupervised | username, full name, bio | Simple additive similarity baseline |
-| `semantic_cosine` | unsupervised | semantic profile embedding | Modern semantic nearest-neighbor baseline |
-| `linksocial_sgd` | supervised | classical LINKSOCIAL features | Reproduction of weighted ranking idea |
-| `linksocial_logreg` | supervised | classical LINKSOCIAL features | Strong linear comparator |
-| `linksocial_rf` | supervised | classical LINKSOCIAL features | Tree-based comparator close to the paper |
-| `lexical_modern_gbdt` | supervised | classical + richer lexical features | Strong non-neural modern profile baseline |
-| `semantic_hybrid_gbdt` | supervised | classical + lexical + semantic | Strongest research-oriented profile-only model |
+| `baseline` | unsupervised | username, full name, bio | simple additive similarity baseline |
+| `semantic_cosine` | unsupervised | semantic profile embeddings | semantic nearest-neighbor baseline |
+| `linksocial_sgd` | supervised | classical LINKSOCIAL features | weighted ranking reproduction |
+| `linksocial_logreg` | supervised | classical LINKSOCIAL features | linear comparison model |
+| `linksocial_rf` | supervised | classical LINKSOCIAL features | tree-based paper-style comparison |
+| `lexical_modern_gbdt` | supervised | classical + lexical modern features | stronger non-neural modern baseline |
+| `semantic_hybrid_gbdt` | supervised | classical + lexical + semantic features | strongest profile-only model in current repo |
 
-## What the code does
+## Repo Layout
 
-- Parses the public LinkSocial dataset into a canonical schema.
-- Reproduces the core LINKSOCIAL ideas:
-  - Jaro-Winkler similarity
-  - TF-IDF bio similarity
-  - bigram overlaps
-  - character-distribution similarity
-  - Jaccard-based candidate pruning
-- Adds newer profile-linkage baselines:
-  - semantic cosine over `BAAI/bge-small-en-v1.5`
-  - logistic regression on classical features
-  - gradient-boosted lexical-modern model
-  - gradient-boosted semantic-hybrid model
-- Evaluates:
-  - pairwise linkage across `google_plus`, `instagram`, and `twitter`
-  - three-platform linkage across all supported models
+- `src/linksocial_final_year/data.py`: raw dataset parsing and canonical loading
+- `src/linksocial_final_year/features.py`: classical, lexical, and semantic-compatible feature construction
+- `src/linksocial_final_year/evaluation.py`: training, scoring, pairwise, and multi-platform evaluation
+- `src/linksocial_final_year/webapp.py`: FastAPI app and demo service
+- `src/linksocial_final_year/web/`: minimal frontend assets
+- `tests/`: pipeline and web app tests
 
 ## Setup
+
+Install everything with `uv`:
 
 ```bash
 uv sync --dev
 ```
 
-## Run The Research Frontend
+Python requirement:
 
-```bash
-uv run linksocial serve-web --host 127.0.0.1 --port 8000
+- `>=3.12`
+
+## Dataset Preparation
+
+Expected raw dataset location:
+
+```text
+data/raw/Dataset-LinkSocial
 ```
-
-Then open `http://127.0.0.1:8000`.
-
-The frontend is designed as a research studio rather than a dashboard:
-
-- left panel: profile search and source selection
-- center panel: orbit-style linkage graph
-- right panel: evidence inspector with model scores and top features
-- lower panels: pairwise and multi-platform result tables
-
-On first real boot, the app loads cached semantic embeddings and builds or loads demo model artifacts from `data/processed/demo_models/`. After that, the UI is much faster to reopen.
-
-## Data Preparation
-
-The dataset should exist at `data/raw/Dataset-LinkSocial`.
 
 Prepare the canonical processed file:
 
@@ -118,9 +101,13 @@ Prepare the canonical processed file:
 uv run linksocial prepare-data
 ```
 
-This writes `data/processed/profiles.jsonl`.
+This writes:
+
+- `data/processed/profiles.jsonl`
 
 ## Run Experiments
+
+Recommended command used for the current evaluated results:
 
 ```bash
 uv run linksocial run-experiments \
@@ -131,31 +118,53 @@ uv run linksocial run-experiments \
   --semantic-batch-size 128
 ```
 
-Optional knobs:
+Outputs:
+
+- `results/latest/metrics.json`
+- `results/latest/summary.md`
+- `data/processed/semantic_cache/*.npz`
+
+Notes:
+
+- semantic embeddings are cached after the first full run
+- the default experimental story is profile-only, not graph-based or multimodal
+
+## Run The Frontend
+
+Two equivalent ways:
 
 ```bash
-uv run linksocial run-experiments \
-  --max-candidates 150 \
-  --cluster-ratio 0.02 \
-  --seed 42 \
-  --semantic-model-name BAAI/bge-small-en-v1.5
+uv run linksocial serve-web --host 127.0.0.1 --port 8000
 ```
 
-Results are written under `results/latest/`.
-
-Semantic embeddings are cached at `data/processed/semantic_cache/BAAI__bge_small_en_v1_5.npz` so repeated runs do not re-encode all profiles.
-
-## Results From This Environment
-
-Run used:
+or:
 
 ```bash
-uv run linksocial run-experiments \
-  --max-candidates 40 \
-  --min-candidates 20 \
-  --cluster-ratio 0.005 \
-  --semantic-batch-size 128
+uv run linksocial-web
 ```
+
+Then open:
+
+```text
+http://127.0.0.1:8000
+```
+
+The frontend is intentionally minimal and research-oriented:
+
+- left: source profile search
+- center: candidate linkage graph
+- right: evidence inspector with feature and model scores
+- bottom: experiment result tables
+
+On first real boot, the app may train or load cached demo pair models under:
+
+- `data/processed/demo_models/`
+
+After that, reopening the UI is much faster.
+
+## Current Results
+
+These are the current evaluated results from the environment used in this repo.
 
 ### Pairwise Results
 
@@ -177,74 +186,75 @@ uv run linksocial run-experiments \
 | Lexical modern GBDT | 0.8187 | 0.8604 | 0.8533 | 0.8441 |
 | Semantic hybrid GBDT | 0.8313 | 0.8668 | 0.8633 | 0.8538 |
 
-### Interpretation
+## Practical Takeaways
 
-- The original LINKSOCIAL family remains strong, especially `linksocial_rf`.
-- A pure semantic encoder is already competitive, especially on multi-platform linkage.
-- The best overall model in this dataset setting is the profile-only semantic hybrid ranker.
-- This suggests the current dataset benefits most from combining:
-  - classical profile-matching heuristics
-  - richer lexical overlap signals
-  - semantic profile representations
+- the original LINKSOCIAL feature family is still strong, especially `linksocial_rf`
+- semantic-only ranking is already competitive on this dataset
+- the best current approach in this repo is the hybrid semantic model
+- the strongest profile-only story here is not replacing LINKSOCIAL, but extending it
+
+## Frontend Product Direction
+
+The frontend is intentionally not a flashy dashboard. The current UI is meant to feel like a real analyst tool:
+
+- compact top bar instead of a landing-page hero
+- restrained monochrome surface with one accent color
+- dense but readable data presentation
+- candidate graph as a working aid, not decoration
+- evidence inspector focused on scores and signals
 
 ## Tests
+
+Run the test suite with:
 
 ```bash
 uv run pytest
 ```
 
-## Notes on Reproduction
+Current test coverage includes:
 
-- The paper uses a 60/40 train-test split. This repo follows that default.
-- The public dataset contains profile JSON and ground-truth group structure, but not the original image embeddings used in the paper.
-- Image similarity is therefore excluded from the executable reproduction.
-- Candidate pruning is implemented using the paper’s merged-bigram Jaccard idea, with configurable cluster size.
-- The semantic extension is intentionally profile-only so the comparison remains fair on the available dataset.
+- dataset loading and canonicalization
+- experiment pipeline smoke coverage
+- web app endpoint smoke coverage
 
-## Expected Outputs
+## Reproduction Notes
 
-- `results/latest/metrics.json`
-- `results/latest/summary.md`
-- `data/processed/semantic_cache/*.npz`
+- the paper uses a 60/40 train-test split; this repo follows that default
+- the public dataset exposes profile JSON and identity grouping, but not the full multimodal signals described in later UIL work
+- image similarity from the original paper is not executable here because the public dataset does not provide a complete image-feature setup
+- the semantic extension is profile-only to keep the comparison fair on the available data
 
-## Recent UIL Advancements As Of April 8, 2026
+## Recent Research Context
 
-The 2024 survey by Senette, Siino, and Tesconi argues that recent progress is increasingly driven by deep architectures, but also emphasizes that benchmark scarcity and restricted platform APIs remain the main bottlenecks for fair comparison. Source: https://arxiv.org/abs/2409.08966
+The repo already includes stronger profile-only baselines, but recent UIL work has moved further in several directions:
 
-Recent representative directions:
+- deep semantic modeling over richer user text
+- graph-aware linkage over follower or interaction networks
+- multimodal linkage using images and posts
+- LLM-assisted multi-view reasoning over heterogeneous signals
 
-- `StyleLink` (ICWSM 2025): brings stylometric representations into a GNN-based UIL pipeline, combining writing-style signals with social structure. This is relevant if you extend this project from profile metadata to post text and interaction graphs. Source: https://dmas.lab.mcgill.ca/fung/pub/XF25icwsm.pdf
-- `UIL-HC-MV` (ACML 2025): uses multi-view attribute and structure fusion, then adds LLM-derived high-order themes and BERT fine-tuning to reduce cross-network heterogeneity. Source: https://openreview.net/pdf/5d7fba2a7e864abde843889768ee70bd3408b110.pdf
-- `MT-Link` (arXiv 2025): uses a correlation-attention masked transformer to learn spatio-temporal co-occurrence for mobility-based UIL. Source: https://arxiv.org/abs/2504.01979
-- `DegUIL` (2023): focuses on long-tailed graph UIL and degree imbalance, which remains a core issue when moving from profile matching to graph alignment. Source: https://arxiv.org/abs/2308.05322
+Representative sources referenced during implementation:
 
-## What We Implemented Versus What The Latest Papers Need
+- Senette et al. 2024 survey: https://arxiv.org/abs/2409.08966
+- StyleLink (ICWSM 2025): https://dmas.lab.mcgill.ca/fung/pub/XF25icwsm.pdf
+- UIL-HC-MV (ACML 2025): https://openreview.net/pdf/5d7fba2a7e864abde843889768ee70bd3408b110.pdf
+- MT-Link (2025): https://arxiv.org/abs/2504.01979
+- DegUIL (2023): https://arxiv.org/abs/2308.05322
 
-Implemented now:
+## What Is Still Out Of Scope For This Dataset
 
-- profile attributes
-- lexical similarity
-- semantic profile embeddings
-- supervised reranking over candidate pools
+Not realistically implementable on the public LinkSocial release without collecting new data:
 
-Not implementable on the current public LinkSocial dataset without new data collection:
+- follower/friend graph alignment
+- post-level stylometry
+- multimodal post or profile-image fusion
+- mobility or temporal co-occurrence linkage
+- LLM-guided graph-and-attribute reasoning
 
-- social graph modeling
-- stylometric post-level modeling
-- multimodal image-plus-post fusion
-- spatio-temporal mobility linkage
-- LLM-guided multi-view graph reasoning
+## Good Next Steps
 
-## Next Research Upgrades For This Repo
-
-Given the current codebase and your dual RTX 3060 12 GB GPUs, the most logical next upgrades are:
-
-1. Replace `BAAI/bge-small-en-v1.5` with a larger semantic encoder or a cross-encoder reranker for top-k candidate reranking.
-2. Add stylometric features if you can collect user posts or captions, aligning this repo with the StyleLink direction.
-3. Add CLIP or BLIP-based profile/image fusion if profile pictures or post images become available.
-4. Add a heterogeneous graph branch if follower/friend or interaction data is collected, then compare against DegUIL-style graph-aware methods.
-5. Add an LLM-assisted explanation or theme-extraction stage once richer user text is available, closer to UIL-HC-MV.
-
-## Research-Backed Conclusion
-
-On this dataset, the strongest practical direction is not abandoning LINKSOCIAL, but extending it. The best results came from a hybrid stack that keeps the paper’s profile-engineering intuition and augments it with stronger lexical and semantic representations. That is the right research story for this codebase today: a careful classical reproduction plus a logically stronger, dataset-compatible modern comparison.
+1. Upgrade the semantic encoder or add a cross-encoder reranker for top-k candidates.
+2. Add stylometric features if post text becomes available.
+3. Add CLIP or BLIP-based image fusion if richer media is collected.
+4. Add a graph branch if follower or interaction data is obtained.
+5. Add model explainability summaries in the frontend for candidate-level reasoning.
